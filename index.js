@@ -1,17 +1,48 @@
-const express = require("express");
+const { createServer } = require('http')
+const { parse } = require('url')
+const next = require('next')
+ 
+const dev = process.env.NODE_ENV !== 'production'
+const hostname = 'localhost'
+const port = 3000
+// when using middleware `hostname` and `port` must be provided below
+const app = next({ dev, hostname, port })
+const handle = app.getRequestHandler()
+ 
+app.prepare().then(() => {
+  createServer(async (req, res) => {
+    try {
+      // Be sure to pass `true` as the second argument to `url.parse`.
+      // This tells it to parse the query portion of the URL.
+      const parsedUrl = parse(req.url, true)
+      const { pathname, query } = parsedUrl
+ 
+        await app.render(req, res, __dirname, query)
+      
+    } catch (err) {
+      console.error('Error occurred handling', req.url, err)
+      res.statusCode = 500
+      res.end('internal server error')
+    }
+  })
+    .once('error', (err) => {
+      console.error(err)
+      process.exit(1)
+    })
+    .listen(port, () => {
+      console.log(`> Ready on http://${hostname}:${port}`)
+    })
+})
 const socketio = require("socket.io");
-const http = require("http");
 const fs = require("fs");
 const { addWords, isBad } = require("adults");
 var roomname;
 var users = [];
 var rooms = [];
 var winners = [];
-const app = express();
 const PORT = 3000 || process.env.PORT;
 const server = http.createServer(app);
 // Set static folder
-app.use(express.static(__dirname));
 
 // Socket setup
 const io = socketio(server);
@@ -19,7 +50,6 @@ var i = 0;
 
 var roomnumber;
 var people = 0;
-server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 io.on("connection", (socket) => {
   people++;
   socket.emit("userjoined");
