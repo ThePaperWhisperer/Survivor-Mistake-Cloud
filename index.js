@@ -2,6 +2,7 @@ const express = require("express");
 const socketio = require("socket.io");
 const http = require("http");
 const fs = require("fs");
+const next = require ("next");
 
 const dev = process.env.NODE_ENV !== 'production'
 const appn = next({ dev })
